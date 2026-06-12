@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hermes Agent 指令速查</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f6f8fa; color: #1f2328; padding: 1.5rem 1rem; line-height: 1.5; }
+  .container { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 26px; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 15px; color: #656d76; margin-bottom: 1rem; }
+  .search-bar { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 8px 12px; margin-bottom: 1.25rem; }
+  .search-bar input { border: none; outline: none; font-size: 15px; color: #1f2328; width: 100%; background: transparent; font-family: 'SFMono-Regular', Consolas, ui-monospace, monospace; }
+  .search-bar input::placeholder { color: #8c959f; }
+  .section { margin-bottom: 1.35rem; }
+  .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #656d76; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 5px; }
+  .cmd-card { display: flex; align-items: flex-start; gap: 9px; background: #fff; border: 1px solid #d0d7de; border-radius: 7px; padding: 8px 10px; transition: all 0.12s; cursor: default; }
+  .cmd-card:hover { border-color: #0969da; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .cmd-card:active { transform: translateY(0.5px); }
+  .cmd-name { font-size: 13px; font-weight: 600; color: #0969da; font-family: 'SFMono-Regular', Consolas, ui-monospace, monospace; min-width: 138px; max-width: 220px; flex-shrink: 0; padding-top: 1px; word-break: break-all; }
+  .cmd-name.clickable { cursor: pointer; user-select: all; }
+  .cmd-name.clickable:hover { text-decoration: underline; }
+  .cmd-desc { font-size: 13.5px; color: #656d76; line-height: 1.35; flex: 1; }
+  .no-result { font-size: 14px; color: #8c959f; padding: 1rem 0; }
+  .note { font-size: 12px; color: #8c959f; margin-top: 4px; }
+  .copy-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f2328; color: #fff; padding: 6px 14px; border-radius: 999px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 9999; }
+  .copy-toast.show { opacity: 1; }
+  footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #d0d7de; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.6rem; font-size: 12px; color: #656d76; }
+  footer a { color: #0969da; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .footer-left { display: flex; flex-direction: column; gap: 3px; }
+  .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .legend { font-size: 11px; color: #8c959f; margin-bottom: 0.6rem; }
+  .legend span { display: inline-block; background: #fff; border: 1px solid #d0d7de; border-radius: 4px; padding: 1px 5px; margin-right: 4px; font-family: monospace; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0d1117; color: #e6edf3; }
+    .search-bar, .cmd-card { background: #161b22; border-color: #30363d; }
+    .cmd-card:hover { border-color: #58a6ff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .cmd-name { color: #58a6ff; }
+    .cmd-desc, .subtitle, .note, .legend { color: #8b949e; }
+    .section-title { color: #8b949e; }
+    .search-bar input { color: #e6edf3; }
+    .search-bar input::placeholder { color: #484f58; }
+    footer { border-top-color: #30363d; }
+    footer a { color: #58a6ff; }
+    .copy-toast { background: #30363d; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Hermes Agent 指令速查</h1>
+  <p class="subtitle">常用 CLI 命令 + 对话内斜杠命令 · 点击命令一键复制 · 支持实时搜索过滤</p>
+
+  <div class="search-bar">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:#8c959f;flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="搜索命令或描述（例如 model、sessions、/help）..." id="search" oninput="filter()" />
+  </div>
+
+  <div class="legend">💡 提示：点击蓝色命令文本即可复制到剪贴板。推荐添加到 shell alias 提升效率。</div>
+
+  <div id="content"></div>
+
+  <footer>
+    <div class="footer-left">
+      <span>© 2026 · 基于本地安装与官方指南整理</span>
+      <span>最后更新：2026-06</span>
+    </div>
+    <div class="footer-right">
+      <span><a href="https://github.com/NousResearch/hermes-agent" target="_blank">官方 GitHub</a> · <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank">官方文档</a></span>
+      <span><a href="https://github.com/community-scripts/ProxmoxVE" target="_blank">参考样式：ProxmoxVE tailscale-command.html</a></span>
+    </div>
+  </footer>
+</div>
+
+<div id="toast" class="copy-toast">已复制到剪贴板</div>
+
+<script>
+const data = [
+  // ========== CLI 启动与对话 ==========
+  { cat: "🚀 启动与对话 (CLI)", items: [
+    { cmd: "hermes", desc: "启动交互式对话（默认恢复最近会话）" },
+    { cmd: "hermes -c \"帮我写一个 Python 脚本\"", desc: "一次性任务模式，执行后自动退出" },
+    { cmd: "hermes -z \"prompt\"", desc: "One-shot 纯净模式，仅输出最终响应（适合脚本/管道）" },
+    { cmd: "hermes --tui", desc: "启动现代 TUI 界面（推荐）" },
+    { cmd: "hermes --cli", desc: "强制使用经典 REPL" },
+    { cmd: "hermes --model deepseek-reasoner", desc: "本次使用指定模型（覆盖默认）" },
+    { cmd: "hermes --provider openrouter --model anthropic/claude-sonnet-4", desc: "指定 provider + model 启动" },
+    { cmd: "hermes --workspace ~/project", desc: "以指定目录为工作上下文启动" },
+    { cmd: "hermes --yolo", desc: "跳过全部危险操作确认（慎用！）" },
+    { cmd: "hermes --fresh", desc: "全新会话，不加载历史上下文" },
+    { cmd: "hermes --private", desc: "隐私模式（不保存本次对话到数据库）" },
+    { cmd: "hermes --skills github,devops", desc: "预加载指定技能启动" },
+  ]},
+
+  // ========== 会话管理 ==========
+  { cat: "💬 会话管理", items: [
+    { cmd: "hermes sessions list", desc: "列出最近会话（支持搜索过滤）" },
+    { cmd: "hermes sessions browse", desc: "交互式会话浏览器（推荐日常使用）" },
+    { cmd: "hermes sessions rename <id> \"新标题\"", desc: "为会话设置/修改标题" },
+    { cmd: "hermes sessions export <id> --format md", desc: "导出会话为 Markdown / JSONL" },
+    { cmd: "hermes sessions delete <id>", desc: "删除指定会话" },
+    { cmd: "hermes sessions prune --older-than 30d", desc: "清理 30 天前的旧会话" },
+    { cmd: "hermes sessions stats", desc: "查看会话存储统计信息" },
+    { cmd: "hermes chat --query \"快速问题\"", desc: "chat 子命令单次查询（旧式）" },
+  ]},
+
+  // ========== 模型管理 ==========
+  { cat: "🧠 模型管理", items: [
+    { cmd: "hermes model", desc: "交互式选择默认模型和 provider（推荐）" },
+    { cmd: "hermes model list", desc: "列出所有已配置模型" },
+    { cmd: "hermes model current", desc: "查看当前默认模型" },
+    { cmd: "hermes model use <model>", desc: "切换默认模型" },
+    { cmd: "hermes model test <model>", desc: "测试模型连通性" },
+    { cmd: "hermes model benchmark", desc: "对所有已配置模型跑基准测试（对比速度/质量/价格）" },
+    { cmd: "hermes model pricing", desc: "查看模型价格信息" },
+    { cmd: "hermes fallback list", desc: "查看 fallback provider 链" },
+    { cmd: "hermes fallback add", desc: "添加 fallback provider" },
+  ]},
+
+  // ========== 工具与技能 ==========
+  { cat: "🛠️ 工具与技能", items: [
+    { cmd: "hermes skills list", desc: "列出已安装技能" },
+    { cmd: "hermes skills search <关键词>", desc: "搜索可安装的技能" },
+    { cmd: "hermes skills browse", desc: "浏览技能市场（分页）" },
+    { cmd: "hermes skills install <name>", desc: "从 Hub 安装技能（如 nousresearch/xxx）" },
+    { cmd: "hermes skills update", desc: "更新所有已安装的 Hub 技能" },
+    { cmd: "hermes skills config", desc: "交互式启用/禁用技能" },
+    { cmd: "hermes tools list", desc: "列出所有工具及启用状态（按平台）" },
+    { cmd: "hermes tools enable web", desc: "启用某个工具集" },
+    { cmd: "hermes tools disable video_gen --permanent", desc: "禁用工具（加 --permanent 写入配置）" },
+    { cmd: "hermes bundles list", desc: "列出技能 bundle（可作为 /bundle 名使用）" },
+    { cmd: "hermes plugins list", desc: "列出已安装插件" },
+    { cmd: "hermes curator status", desc: "查看后台技能维护状态" },
+  ]},
+
+  // ========== 配置与设置 ==========
+  { cat: "⚙️ 配置与设置", items: [
+    { cmd: "hermes setup", desc: "重新运行完整配置向导（改 Key / 模型时推荐）" },
+    { cmd: "hermes setup --models-only", desc: "仅重新配置模型" },
+    { cmd: "hermes setup --keys-only", desc: "仅重新配置 API Keys" },
+    { cmd: "hermes setup --reset", desc: "重置配置（谨慎！）" },
+    { cmd: "hermes config show", desc: "查看当前配置" },
+    { cmd: "hermes config edit", desc: "用 $EDITOR 编辑 config.yaml" },
+    { cmd: "hermes config set model.provider xiaomi", desc: "快速设置单个配置项" },
+    { cmd: "hermes config check", desc: "检查配置缺失或过时项" },
+    { cmd: "hermes postinstall", desc: "安装非 Python 依赖（node、浏览器、ripgrep、ffmpeg）" },
+  ]},
+
+  // ========== 诊断与状态 ==========
+  { cat: "🔍 诊断与状态", items: [
+    { cmd: "hermes doctor", desc: "完整系统诊断（配置、依赖、模型连通性）" },
+    { cmd: "hermes doctor --fix", desc: "尝试自动修复可修复的问题" },
+    { cmd: "hermes doctor --models", desc: "仅检查模型连接" },
+    { cmd: "hermes status", desc: "查看各组件状态" },
+    { cmd: "hermes status --deep", desc: "深度检查（较耗时）" },
+    { cmd: "hermes logs -f", desc: "实时跟踪 agent.log（类似 tail -f）" },
+    { cmd: "hermes logs errors --since 1h", desc: "查看最近 1 小时错误日志" },
+    { cmd: "hermes debug share", desc: "打包日志+系统信息上传并生成分享链接（支持用）" },
+    { cmd: "hermes dump", desc: "导出完整 setup 摘要用于调试" },
+    { cmd: "hermes prompt-size", desc: "显示系统提示词 + 工具 schema 的字节占用" },
+  ]},
+
+  // ========== 网关、Cron 与多平台 ==========
+  { cat: "📡 网关、Cron 与集成", items: [
+    { cmd: "hermes gateway status", desc: "查看消息网关状态" },
+    { cmd: "hermes gateway setup", desc: "配置 Telegram / Discord / WhatsApp 等平台" },
+    { cmd: "hermes gateway start", desc: "启动网关后台服务" },
+    { cmd: "hermes gateway run", desc: "前台运行网关（Docker/WSL 推荐）" },
+    { cmd: "hermes cron list", desc: "列出所有定时任务" },
+    { cmd: "hermes cron create", desc: "创建定时任务（自然语言描述）" },
+    { cmd: "hermes cron run <name>", desc: "立即手动触发某个 cron 任务" },
+    { cmd: "hermes cron logs", desc: "查看定时任务日志" },
+    { cmd: "hermes portal info", desc: "查看 Nous Portal 连接与 Tool Gateway 状态" },
+    { cmd: "hermes dashboard", desc: "启动 Web UI 仪表盘（默认 9119 端口）" },
+    { cmd: "hermes kanban list", desc: "查看多 profile 协作看板" },
+  ]},
+
+  // ========== 备份、迁移与维护 ==========
+  { cat: "🗄️ 备份、迁移与维护", items: [
+    { cmd: "hermes backup", desc: "完整备份 ~/.hermes（配置、技能、会话、状态）" },
+    { cmd: "hermes backup --quick", desc: "快速快照（仅关键状态文件）" },
+    { cmd: "hermes import ~/backup.zip", desc: "从备份恢复" },
+    { cmd: "hermes update", desc: "更新 Hermes Agent 到最新版" },
+    { cmd: "hermes update --check", desc: "仅检查是否有更新" },
+    { cmd: "hermes claw migrate", desc: "从 OpenClaw 迁移数据/配置" },
+    { cmd: "hermes migrate", desc: "迁移旧版配置或已退役模型设置" },
+    { cmd: "hermes uninstall", desc: "卸载 Hermes（谨慎）" },
+  ]},
+
+  // ========== 记忆、MCP 与高级 ==========
+  { cat: "🧩 记忆、MCP 与高级", items: [
+    { cmd: "hermes memory setup", desc: "配置外部记忆提供者（honcho 等）" },
+    { cmd: "hermes memory status", desc: "查看当前记忆提供者状态" },
+    { cmd: "hermes mcp list", desc: "列出 MCP 服务器" },
+    { cmd: "hermes mcp add <server>", desc: "添加 MCP 服务器" },
+    { cmd: "hermes profile list", desc: "列出多 profile（隔离实例）" },
+    { cmd: "hermes profile create work", desc: "创建新 profile" },
+    { cmd: "hermes --worktree", desc: "在隔离 git worktree 中运行（并行 agent）" },
+    { cmd: "hermes completion zsh", desc: "生成 shell 补全脚本（bash/zsh/fish）" },
+    { cmd: "hermes insights 7", desc: "查看最近 7 天使用洞察与 token 统计" },
+  ]},
+
+  // ========== 对话内斜杠命令 (/xxx) ==========
+  { cat: "💬 对话内斜杠命令 (/xxx)", items: [
+    { cmd: "/help", desc: "显示所有可用斜杠命令（支持 /help <cmd> 详情）" },
+    { cmd: "/model [model]", desc: "切换当前会话模型（支持 --global 改默认）" },
+    { cmd: "/memory add 关键事实", desc: "添加全局记忆（永久保存）" },
+    { cmd: "/memory", desc: "查看/编辑/搜索记忆" },
+    { cmd: "/skills", desc: "管理当前会话加载的技能" },
+    { cmd: "/clear", desc: "清除当前对话上下文（全新开始）" },
+    { cmd: "/compact [here N]", desc: "压缩上下文（释放 token，可保留最近 N 轮）" },
+    { cmd: "/export", desc: "导出当前对话（Markdown / JSON / 文本）" },
+    { cmd: "/new [name]", desc: "开启全新会话（别名 /reset）" },
+    { cmd: "/retry", desc: "重试上一条用户消息" },
+    { cmd: "/undo [N]", desc: "撤销最近 N 轮用户输入并重提示" },
+    { cmd: "/rollback [num]", desc: "列出或恢复文件系统检查点" },
+    { cmd: "/private", desc: "本次对话进入隐私模式（不保存）" },
+    { cmd: "/yolo", desc: "切换 YOLO 模式（跳过危险审批）" },
+    { cmd: "/status", desc: "显示当前会话信息" },
+    { cmd: "/goal 长期目标描述", desc: "设置跨轮持久目标（直到完成）" },
+    { cmd: "/subgoal 额外条件", desc: "为当前目标添加子条件" },
+    { cmd: "/system 指令", desc: "注入系统消息（纠正 Agent 行为）" },
+    { cmd: "/temp claude-sonnet-4", desc: "仅下一条消息临时切换模型" },
+    { cmd: "/version", desc: "显示 Hermes 版本" },
+    { cmd: "/update", desc: "触发更新" },
+    { cmd: "/debug", desc: "上传调试报告" },
+    { cmd: "/quit [--delete]", desc: "退出 CLI（--delete 同时删历史）" },
+  ]},
+];
+
+function copyToClipboard(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.textContent = '已复制：' + text;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1600);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const toast = document.getElementById('toast');
+    toast.textContent = '已复制';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1400);
+  });
+}
+
+function render(q) {
+  const container = document.getElementById('content');
+  q = (q || '').toLowerCase().trim();
+  let html = '';
+  let any = false;
+
+  data.forEach(section => {
+    const items = q
+      ? section.items.filter(i => 
+          i.cmd.toLowerCase().includes(q) || 
+          i.desc.toLowerCase().includes(q)
+        )
+      : section.items;
+    if (!items.length) return;
+    any = true;
+
+    html += `<div class="section"><div class="section-title">${section.cat}</div><div class="cmd-grid">`;
+    items.forEach(i => {
+      const isSlash = i.cmd.startsWith('/');
+      const displayCmd = i.cmd;
+      html += `<div class="cmd-card" title="点击命令复制">
+        <span class="cmd-name clickable" data-cmd="${displayCmd.replace(/"/g, '&quot;')}">${displayCmd}</span>
+        <span class="cmd-desc">${i.desc}</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  if (!any) html = `<div class="no-result">未找到匹配的命令或描述</div>`;
+  container.innerHTML = html;
+
+  // bind click copy
+  container.querySelectorAll('.cmd-name.clickable').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopImmediatePropagation();
+      const cmd = el.getAttribute('data-cmd');
+      copyToClipboard(cmd, el);
+    });
+  });
+}
+
+function filter() { 
+  render(document.getElementById('search').value); 
+}
+
+render('');
+
+// Keyboard: press / to focus search (like many CLIs)
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+    document.getElementById('search').select();
+  }
+  if (e.key === 'Escape' && document.activeElement.id === 'search') {
+    document.getElementById('search').blur();
+  }
+});
+
+// Bonus: show a small tip on load in console (harmless)
+console.log('%c[Hermes Command] 按 / 键可快速聚焦搜索框。所有蓝色命令可点击复制。', 'color:#8b949e;font-size:10px');
+</script>
+</body>
+</html>
